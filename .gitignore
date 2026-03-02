@@ -1,0 +1,7 @@
+security/
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.vscode/
+Network_Data/
