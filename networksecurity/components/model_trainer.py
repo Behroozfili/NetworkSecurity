@@ -1,10 +1,12 @@
 import os
 import sys 
+import dagshub
 from networksecurity.exception.exception import NetworkSecurityException
 from networksecurity.logging.logger import logging
 from networksecurity.entity.artifact_entity import DataTransformationArtifact,ModelTrainerArtifact
 from networksecurity.entity.config_entity import ModelTrainerConfig
 from networksecurity.utils.main_utils.utils import read_yaml_file
+from networksecurity.entity.artifact_entity import ClassificationMetricArtifact
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import r2_score
 from sklearn.neighbors import KNeighborsClassifier
@@ -20,6 +22,10 @@ from networksecurity.utils.ml_utils.model.estimator import NetworkModel
 from networksecurity.utils.main_utils.utils import save_object,load_object
 from networksecurity.utils.main_utils.utils import load_numpy_array_data,evaluate_models
 from networksecurity.utils.ml_utils.metric.classification_metric import get_classification_score
+from networksecurity.utils.ml_utils.metric import classification_metric
+import mlflow
+from dotenv import load_dotenv
+load_dotenv()
 
 class ModelTrainer:
   def __init__(self,model_trainer_config:ModelTrainerConfig,
@@ -30,7 +36,33 @@ class ModelTrainer:
     except Exception as e :
       NetworkSecurityException(e,sys)
       
-      
+  def track_mlflow(self, 
+                 best_model, 
+                 train_metric: ClassificationMetricArtifact, 
+                 test_metric: ClassificationMetricArtifact):
+    username = os.getenv("DAGSHUB_USERNAME")
+    token = os.getenv("DAGSHUB_TOKEN")
+    repo_name = os.getenv("DAGSHUB_REPO_NAME")
+        
+        
+    os.environ['MLFLOW_TRACKING_USERNAME'] = username
+    os.environ['MLFLOW_TRACKING_PASSWORD'] = token
+    tracking_uri = f"https://dagshub.com/{username}/{repo_name}.mlflow"
+    logging.info("mlflow tracking started")
+    mlflow.set_tracking_uri(tracking_uri)
+    with mlflow.start_run():
+       mlflow.log_params(best_model.get_params())
+       mlflow.log_param("model_type", type(best_model).__name__)
+       mlflow.log_metric("train_f1", train_metric.f1_score)
+       mlflow.log_metric("train_precision", train_metric.precision_score)
+       mlflow.log_metric("train_recall", train_metric.recall_score)
+       mlflow.log_metric("test_f1", test_metric.f1_score)
+       mlflow.log_metric("test_precision", test_metric.precision_score)
+       mlflow.log_metric("test_recall", test_metric.recall_score)
+       mlflow.sklearn.log_model(best_model, "model")
+       logging.log("mlflow_tracking completed")      
+       
+   
   def train_model(self,X_train,y_train,X_test,y_test): 
    try:
      hyperparam_file_path = os.path.join(os.getcwd(), "params", "hyperparams.yml")
@@ -61,6 +93,7 @@ class ModelTrainer:
      
      best_model = trained_models_dict[best_model_name]
      
+     
      y_train_pred=best_model.predict(X_train)
      get_classification_score(y_true=y_train,y_pred=y_train_pred)
      classification_train_metric = get_classification_score(y_true=y_train,y_pred=y_train_pred)
@@ -69,6 +102,9 @@ class ModelTrainer:
      get_classification_score(y_true=y_test,y_pred=y_test_pred)
      classification_test_metric = get_classification_score(y_true=y_test,y_pred=y_test_pred)
      
+     ##Track the experiements with mlflow
+     self.track_mlflow(best_model,classification_train_metric, classification_test_metric)
+      
      preprocessor = load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
      
      model_dir_path = os.path.dirname(self.model_trainer_config.trained_model_file_path)
