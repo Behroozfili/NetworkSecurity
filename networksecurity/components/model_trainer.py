@@ -60,7 +60,7 @@ class ModelTrainer:
        mlflow.log_metric("test_precision", test_metric.precision_score)
        mlflow.log_metric("test_recall", test_metric.recall_score)
        mlflow.sklearn.log_model(best_model, "model")
-       logging.log("mlflow_tracking completed")      
+       logging.info("mlflow_tracking completed")      
        
    
   def train_model(self,X_train,y_train,X_test,y_test): 
@@ -113,6 +113,7 @@ class ModelTrainer:
      Network_Model= NetworkModel(preprocessor=preprocessor,model=best_model)
      
      save_object(self.model_trainer_config.trained_model_file_path,obj=Network_Model)
+     save_object("final_models/model.pkl",best_model)
      
      # Model Trainer Artifact
      model_trainer_artifact=ModelTrainerArtifact(trained_model_file_path=self.model_trainer_config.trained_model_file_path,
