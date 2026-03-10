@@ -13,5 +13,6 @@ mlflow
 dagshub
 fastapi
 python-multipart
-
+dvc[s3]
+awscli
 -e .
