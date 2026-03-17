@@ -15,4 +15,5 @@ fastapi
 python-multipart
 dvc[s3]
 awscli
+pytest
 -e .

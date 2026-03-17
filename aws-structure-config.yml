@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Full Stack Infrastructure - ECR, S3, and App Runner
+
+Resources:
+  
+  MyAppRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: network-security-app
+      ImageScanningConfiguration:
+        ScanOnPush: true
+
+  
+  MyArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: networksecurity1234bf
+      VersioningConfiguration:
+        Status: Enabled
+
+  
+  AppRunnerInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: tasks.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: 
+                  - !Sub "arn:aws:s3:::networksecurity1234bf"
+                  - !Sub "arn:aws:s3:::networksecurity1234bf/*"
+
+ 
+  #MyAppRunnerService:
+    #Type: AWS::AppRunner::Service
+    #Properties:
+      #ServiceName: network-security-service
+      #SourceConfiguration:
+        #AuthenticationConfiguration:
+          #AccessRoleArn: !GetAtt AppRunnerAccessRole.Arn
+        #ImageRepository:
+          #ImageIdentifier: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/network-security-app:latest"
+          #ImageRepositoryType: ECR
+          #ImageConfiguration:
+            #Port: "8000"
+      #InstanceConfiguration:
+        #InstanceRoleArn: !GetAtt AppRunnerInstanceRole.Arn
+
+  
+  #AppRunnerAccessRole:
+    #Type: AWS::IAM::Role
+    #Properties:
+      #AssumeRolePolicyDocument:
+        #Version: "2012-10-17"
+        #Statement:
+          #- Effect: Allow
+            #Principal:
+              #Service: build.apprunner.amazonaws.com
+            #Action: sts:AssumeRole
+      #ManagedPolicyArns:
+        #- arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRDataAccess
+
+#Outputs:
+  #ServiceUrl:
+    #Value: !GetAtt MyAppRunnerService.ServiceUrl
+    #Description: URL to access the FastAPI app
