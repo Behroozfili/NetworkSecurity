@@ -16,6 +16,7 @@ from networksecurity.entity.config_entity import TrainingPipelineConfig
 
 
 if __name__=='__main__':
+  
   try:
     trainingpiplineconfig=TrainingPipelineConfig()
     dataingestionconfig=DataIngestionConfig(trainingpiplineconfig)

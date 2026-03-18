@@ -43,7 +43,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+        aws-region: eu-central-1
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -61,7 +61,7 @@ jobs:
   # 3. Continuous Deployment: Deploy to App Runner
   #continuous-deployment:
     #name: Continuous Deployment - App Runner
-    #needs: continuous-delivery # فقط اگر پوش به ECR موفق باشد اجرا می‌شود
+    #needs: continuous-delivery 
     #runs-on: ubuntu-latest
     #steps:
     #- name: Configure AWS Credentials
@@ -69,8 +69,8 @@ jobs:
       #with:
         #aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         #aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        #aws-region: us-east-1
+        #aws-region: eu-central-1
 
     #- name: Deploy to AWS App Runner
       #run: |
-        #aws apprunner start-deployment --service-arn ${{ secrets.APP_RUNNER_SERVICE_ARN }}--region us-east-1
+        #aws apprunner start-deployment --service-arn ${{ secrets.APP_RUNNER_SERVICE_ARN }} --region eu-central-1
